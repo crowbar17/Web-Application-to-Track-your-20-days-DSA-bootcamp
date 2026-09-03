@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>20-Day DSA Tracker</title>
+  <style>
+    #app * { box-sizing: border-box; }
+    #app { max-width:720px; margin:0 auto; padding:28px 20px 60px; font-family:'Iowan Old Style','Georgia','Times New Roman',serif; color:#232622; }
+    #app h1 { font-size: 26px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+    #app .sub { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: #6b6f68; margin: 0 0 22px; }
+    #app .sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    #app .progress-wrap { display:flex; align-items:center; gap:14px; margin-bottom:26px; }
+    #app .progress-track { flex:1; height:7px; background: #DAD9D0; border-radius: 4px; overflow:hidden; }
+    #app .progress-fill { height:100%; background: #3B6B5E; border-radius: 4px; transition: width 0.35s ease; }
+    #app .progress-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: #6b6f68; white-space: nowrap; }
+    #app .day-card { border-top: 1px solid #DAD9D0; }
+    #app .day-card:last-child { border-bottom: 1px solid #DAD9D0; }
+    #app .day-head { display:flex; align-items:center; gap:12px; padding:14px 2px; cursor:pointer; user-select:none; }
+    #app .day-num { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; font-weight: 600; color: #6b6f68; width: 44px; flex-shrink:0; }
+    #app .day-num.done { color: #3B6B5E; }
+    #app .day-title { font-size: 17px; flex: 1; }
+    #app .day-frac { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; color: #6b6f68; flex-shrink:0; }
+    #app .day-frac.done { color: #3B6B5E; font-weight: 600; }
+    #app .chev { width: 16px; height:16px; flex-shrink:0; transition: transform 0.2s ease; color: #6b6f68; }
+    #app .chev.open { transform: rotate(90deg); }
+    #app .day-body { display:none; padding: 0 2px 20px 2px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    #app .day-body.open { display:block; }
+    #app .concept-box { background: #E4EEE9; color: #22493D; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.5; margin-bottom: 14px; }
+    #app .task-row { display:flex; align-items:flex-start; gap: 10px; padding: 7px 0; font-size: 14px; line-height:1.4; }
+    #app .task-row input[type=checkbox] { margin-top: 2px; width: 17px; height:17px; flex-shrink:0; accent-color: #3B6B5E; cursor:pointer; }
+    #app .task-row label { cursor:pointer; flex:1; }
+    #app .task-row.checked label { color: #6b6f68; text-decoration: line-through; text-decoration-color: #DAD9D0; }
+    #app .tag { display:inline-block; font-size: 10px; font-weight:600; letter-spacing:0.02em; padding: 1px 7px; border-radius: 20px; margin-right:8px; vertical-align: 1px; }
+    #app .tag.concept { background: #E4EEE9; color: #22493D; }
+    #app .tag.revise { background: #F4EBD6; color: #5C4415; }
+    #app .footer-note { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; color: #6b6f68; margin-top: 26px; line-height:1.6; }
+    #app .reset-btn { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; color: #6b6f68; background:none; border: 1px solid #DAD9D0; border-radius: 6px; padding: 5px 10px; cursor:pointer; margin-top: 10px; }
+    #app .reset-btn:hover { border-color: #6b6f68; }
+    #app .history-block { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin-top: 24px; padding-top: 16px; border-top: 1px solid #DAD9D0; }
+    #app .history-title { font-size: 12px; font-weight: 600; color: #6b6f68; letter-spacing: 0.02em; margin-bottom: 8px; }
+    #app .history-row { display:flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 4px 0; color: #232622; }
+    #app .history-date { color: #6b6f68; flex-shrink:0; }
+    #app .save-note { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; color: #6b6f68; margin: 14px 0 0; min-height: 14px; }
+  </style>
+</head>
+<body style="background: #F4F4F0; margin: 0;">
+
+  <div id="app">
+    <div id="loading" style="text-align:center;padding:60px 0;color:#6b6f68;font-size:14px;">Loading your progress from MongoDB…</div>
+    <div id="content" style="display:none;"></div>
+  </div>
+
+  <script>
+  (function(){
+    var PLAN = [
+      {n:1, title:"Time Complexity + Arrays",
+       concept:"Big-O, time vs space complexity, array traversal, insert/delete, prefix/suffix basics, frequency counting",
+       problems:["Two Sum","Best Time to Buy and Sell Stock","Contains Duplicate","Maximum Subarray","Product of Array Except Self"]},
+      {n:2, title:"Strings + Hashing",
+       concept:"Character frequency, hash map/set, string traversal, anagram pattern",
+       problems:["Valid Anagram","Group Anagrams","Valid Palindrome","Longest Common Prefix","Longest Substring Without Repeating Characters"]},
+      {n:3, title:"Two Pointers",
+       concept:"Opposite-end pointers, same-direction pointers, sorted-array patterns",
+       problems:["Two Sum II","3Sum","Container With Most Water","Move Zeroes","Sort Colors"], revise:true},
+      {n:4, title:"Sliding Window",
+       concept:"Fixed-size window, variable-size window, frequency map inside the window",
+       problems:["Maximum Average Subarray I","Longest Repeating Character Replacement","Permutation in String","Minimum Size Subarray Sum","Find All Anagrams in a String"], revise:true},
+      {n:5, title:"Prefix Sum + Binary Search",
+       concept:"Prefix sum, range sum queries, binary search, search space reduction",
+       problems:["Running Sum of 1D Array","Find Pivot Index","Binary Search (classic)","Search in Rotated Sorted Array","Find Minimum in Rotated Sorted Array"], revise:true},
+      {n:6, title:"Linked Lists",
+       concept:"Node structure, traversal, insert/delete, reversal, fast/slow pointer",
+       problems:["Reverse Linked List","Middle of the Linked List","Linked List Cycle","Remove Nth Node From End","Merge Two Sorted Lists"], revise:true},
+      {n:7, title:"Stack",
+       concept:"Stack implementation, matching brackets, monotonic stack",
+       problems:["Valid Parentheses","Min Stack","Evaluate Reverse Polish Notation","Daily Temperatures","Next Greater Element I"], revise:true},
+      {n:8, title:"Queue + Deque",
+       concept:"Queue basics, circular queue, deque, BFS intuition, monotonic deque",
+       problems:["Implement Queue using Stacks","Number of Recent Calls","Design Circular Queue","Sliding Window Maximum","First Negative Integer in Every Window"], revise:true},
+      {n:9, title:"Recursion + Backtracking",
+       concept:"Base case, recursive tree, choose - explore - undo",
+       problems:["Fibonacci Number","Climbing Stairs","Subsets","Permutations","Combination Sum"], revise:true},
+      {n:10, title:"Sorting + Intervals",
+       concept:"Sorting algorithms conceptually, custom comparators, interval merging",
+       problems:["Sort an Array (implement Merge Sort)","Merge Intervals","Insert Interval","Non-overlapping Intervals","Meeting Rooms"], revise:true},
+      {n:11, title:"Binary Trees Basics",
+       concept:"Tree terminology, DFS (pre/in/post-order), level order (BFS)",
+       problems:["Maximum Depth of Binary Tree","Same Tree","Invert Binary Tree","Binary Tree Level Order Traversal","Diameter of Binary Tree"], revise:true},
+      {n:12, title:"Binary Search Trees",
+       concept:"BST property, search, insert, validation, inorder = sorted order",
+       problems:["Search in a Binary Search Tree","Validate Binary Search Tree","Lowest Common Ancestor of a BST","Kth Smallest Element in a BST","Convert Sorted Array to BST"], revise:true},
+      {n:13, title:"Heap / Priority Queue",
+       concept:"Min-heap, max-heap, priority queue, the top-K pattern",
+       problems:["Kth Largest Element in an Array","K Closest Points to Origin","Last Stone Weight","Top K Frequent Elements","Merge K Sorted Lists"], revise:true},
+      {n:14, title:"Greedy",
+       concept:"Local vs global decisions, sorting + greedy, interval greedy",
+       problems:["Best Time to Buy and Sell Stock II","Jump Game","Jump Game II","Gas Station","Partition Labels"], revise:true},
+      {n:15, title:"Graph Basics",
+       concept:"Graph representation, adjacency list, BFS, DFS, visited set",
+       problems:["Number of Islands","Clone Graph","Flood Fill","Rotting Oranges","Find if Path Exists in Graph"], revise:true},
+      {n:16, title:"Graphs II",
+       concept:"Connected components, cycle detection, topological sort, indegree",
+       problems:["Course Schedule","Course Schedule II","Number of Connected Components","Redundant Connection","Pacific Atlantic Water Flow"], revise:true},
+      {n:17, title:"Dynamic Programming I (1D)",
+       concept:"DP = solve smaller subproblems and reuse. Write state, transition, base case before coding",
+       problems:["Climbing Stairs (DP version)","House Robber","House Robber II","Min Cost Climbing Stairs","Coin Change"], revise:true},
+      {n:18, title:"Dynamic Programming II",
+       concept:"2D grid DP and subsequence-style DP thinking. Kept to 3 problems on purpose - don't rush this day",
+       problems:["Unique Paths","Longest Common Subsequence","Longest Increasing Subsequence"], revise:true},
+      {n:19, title:"Trie",
+       concept:"Trie structure, insert/search, prefix matching - given its own day rather than tacked onto bit manipulation",
+       problems:["Implement Trie (Prefix Tree)","Add and Search Word","Longest Word in Dictionary"], revise:true},
+      {n:20, title:"Bit Manipulation + Full Revision",
+       concept:"Light warm-up on AND/OR/XOR and bit shifting, then no new topics - this day is a timed cold-revision sweep",
+       problems:["Single Number","Number of 1 Bits","Counting Bits"],
+       extraTasks:["Cold-solve 1 problem from Days 1-7 (no notes)","Cold-solve 1 problem from Days 8-14 (no notes)","Cold-solve 1 problem from Days 15-19 (no notes)","Review your full mistakes log end to end"]}
+    ];
+
+    function buildTasks(day){
+      var tasks = [];
+      tasks.push({key:"concept", label:day.concept, tag:"concept"});
+      day.problems.forEach(function(p, i){
+        tasks.push({key:"p"+i, label:p, tag:null});
+      });
+      if (day.revise) {
+        tasks.push({key:"revise", label:"Cold-revise 2-3 problems from a few days ago (no notes)", tag:"revise"});
+      }
+      if (day.extraTasks) {
+        day.extraTasks.forEach(function(t, i){
+          tasks.push({key:"extra"+i, label:t, tag:"revise"});
+        });
+      }
+      tasks.push({key:"log", label:"Log any missed/slow problems in your mistakes list", tag:null});
+      return tasks;
+    }
+
+    var state = {};
+    var openDay = 1;
+
+    function totalTaskCount(){
+      var total = 0;
+      PLAN.forEach(function(d){ total += buildTasks(d).length; });
+      return total;
+    }
+    var TOTAL_TASKS = totalTaskCount();
+
+    function checkedCount(){
+      var c = 0;
+      Object.keys(state).forEach(function(k){ if(state[k]) c++; });
+      return c;
+    }
+
+    function dayCheckedCount(day){
+      var tasks = buildTasks(day);
+      var c = 0;
+      tasks.forEach(function(t){ if(state["d"+day.n+"-"+t.key]) c++; });
+      return c;
+    }
+
+    function isDayDone(day){
+      var tasks = buildTasks(day);
+      return dayCheckedCount(day) === tasks.length;
+    }
+
+    function firstIncompleteDay(){
+      for (var i=0;i<PLAN.length;i++){
+        if (!isDayDone(PLAN[i])) return PLAN[i].n;
+      }
+      return PLAN[PLAN.length-1].n;
+    }
+
+    function esc(s){
+      return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function formatDate(iso){
+      try {
+        var d = new Date(iso);
+        return d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+      } catch(e){ return ''; }
+    }
+
+    function syncCompletionTimestamps(){
+      PLAN.forEach(function(day){
+        var key = "complete-d"+day.n;
+        var done = isDayDone(day);
+        if (done && !state[key]) {
+          state[key] = new Date().toISOString();
+        } else if (!done && state[key]) {
+          delete state[key];
+        }
+      });
+    }
+
+    function render(){
+      syncCompletionTimestamps();
+      var done = checkedCount();
+      var pct = Math.round((done / TOTAL_TASKS) * 100);
+      var daysDone = PLAN.filter(isDayDone).length;
+
+      var html = '';
+      html += '<h1>20-day DSA tracker</h1>';
+      html += '<p class="sub">Tick as you go. Your progress is synced live with your MongoDB database.</p>';
+      html += '<div class="progress-wrap">';
+      html += '<div class="progress-track"><div class="progress-fill" style="width:'+pct+'%;"></div></div>';
+      html += '<div class="progress-label">'+daysDone+' / 20 days · '+pct+'%</div>';
+      html += '</div>';
+
+      PLAN.forEach(function(day){
+        var tasks = buildTasks(day);
+        var dChecked = dayCheckedCount(day);
+        var complete = dChecked === tasks.length;
+        var open = (day.n === openDay);
+        html += '<div class="day-card">';
+        html += '<div class="day-head" data-day="'+day.n+'">';
+        html += '<span class="day-num'+(complete?' done':'')+'">DAY '+day.n+'</span>';
+        html += '<span class="day-title">'+esc(day.title)+'</span>';
+        html += '<span class="day-frac'+(complete?' done':'')+'">'+dChecked+'/'+tasks.length+'</span>';
+        html += '<svg class="chev'+(open?' open':'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+        html += '</div>';
+        html += '<div class="day-body'+(open?' open':'')+'">';
+
+        var conceptTask = tasks[0];
+        var checkedC = !!state["d"+day.n+"-"+conceptTask.key];
+        html += '<div class="concept-box">'+esc(conceptTask.label)+'</div>';
+        html += renderTaskRow(day.n, conceptTask, "Understood today's concept", checkedC);
+
+        for (var i=1;i<tasks.length;i++){
+          var t = tasks[i];
+          var isChecked = !!state["d"+day.n+"-"+t.key];
+          html += renderTaskRow(day.n, t, t.label, isChecked);
+        }
+
+        html += '</div>';
+        html += '</div>';
+      });
+
+      html += '<p class="footer-note">Days 1-19 each end with a cold revision task - re-solving something from a few days back with no notes. That repetition is what actually makes a pattern stick, so don\'t skip it even when you\'re short on time. Day 20 has no new topics; it\'s a full timed revision sweep.</p>';
+
+      var historyDays = PLAN.filter(function(d){ return !!state["complete-d"+d.n]; });
+      if (historyDays.length){
+        html += '<div class="history-block">';
+        html += '<div class="history-title">History</div>';
+        historyDays.forEach(function(d){
+          var dateStr = formatDate(state["complete-d"+d.n]);
+          html += '<div class="history-row"><span class="history-day">Day '+d.n+' - '+esc(d.title)+'</span><span class="history-date">'+dateStr+'</span></div>';
+        });
+        html += '</div>';
+      }
+
+      html += '<p class="save-note" id="save-note"></p>';
+      html += '<button class="reset-btn" id="reset-btn">Reset all progress</button>';
+
+      document.getElementById('content').innerHTML = html;
+      document.getElementById('content').style.display = 'block';
+      document.getElementById('loading').style.display = 'none';
+      attachHandlers();
+    }
+
+    function renderTaskRow(dayN, task, label, checked){
+      var id = "d"+dayN+"-"+task.key;
+      var tagHtml = '';
+      if (task.tag === 'concept') tagHtml = '<span class="tag concept">Concept</span>';
+      if (task.tag === 'revise') tagHtml = '<span class="tag revise">Revise</span>';
+      return '<div class="task-row'+(checked?' checked':'')+'" data-taskrow="'+id+'">'
+        + '<input type="checkbox" id="'+id+'" '+(checked?'checked':'')+' />'
+        + '<label for="'+id+'">'+tagHtml+esc(label)+'</label>'
+        + '</div>';
+    }
+
+    function attachHandlers(){
+      var heads = document.querySelectorAll('#app .day-head');
+      heads.forEach(function(h){
+        h.addEventListener('click', function(){
+          var n = parseInt(h.getAttribute('data-day'), 10);
+          openDay = (openDay === n) ? -1 : n;
+          render();
+        });
+      });
+
+      var boxes = document.querySelectorAll('#app input[type=checkbox]');
+      boxes.forEach(function(b){
+        b.addEventListener('change', async function(){
+          var id = b.id;
+          state[id] = b.checked;
+          var row = document.querySelector('[data-taskrow="'+id+'"]');
+          if (row) row.classList.toggle('checked', b.checked);
+          syncCompletionTimestamps();
+          
+          var note = document.getElementById('save-note');
+          if (note) note.textContent = 'Saving to cloud...';
+          
+          try {
+            var res = await fetch('/api/progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(state)
+            });
+            if (res.ok) {
+              if (note) note.textContent = 'Saved to MongoDB successfully!';
+            } else {
+              if (note) note.textContent = 'Failed to save to cloud.';
+            }
+          } catch(e) {
+            if (note) note.textContent = 'Network error - check your server.';
+          }
+          
+          render();
+        });
+      });
+
+      var resetBtn = document.getElementById('reset-btn');
+      if (resetBtn){
+        resetBtn.addEventListener('click', async function(){
+          if (!confirm('Clear all ticked progress? This will reset the database.')) return;
+          state = {};
+          openDay = firstIncompleteDay();
+          
+          try {
+            await fetch('/api/progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(state)
+            });
+          } catch(e) {}
+          
+          render();
+        });
+      }
+    }
+
+    // LOAD STATE FROM MONGODB API
+    async function init(){
+      try {
+        var res = await fetch('/api/progress');
+        var data = await res.json();
+        state = data || {};
+      } catch(e) {
+        state = {};
+      }
+      openDay = firstIncompleteDay();
+      render();
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>
