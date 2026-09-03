@@ -41,7 +41,8 @@ app.get('/api/progress', async (req, res) => {
     }
     res.json(userState.trackerData);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch progress" });
+    console.error("❌ GET Error:", error);
+    res.status(500).json({ error: "Failed to fetch progress", details: error.message });
   }
 });
 
@@ -53,12 +54,13 @@ app.post('/api/progress', async (req, res) => {
     const updatedState = await TrackerState.findOneAndUpdate(
       { userId: "admin" },
       { trackerData: newState },
-      { new: true, upsert: true } 
+      { upsert: true, returnDocument: 'after' } 
     );
     
     res.json({ message: "Progress saved to cloud!", data: updatedState.trackerData });
   } catch (error) {
-    res.status(500).json({ error: "Failed to save progress" });
+    console.error("❌ POST Error:", error);
+    res.status(500).json({ error: "Failed to save progress", details: error.message });
   }
 });
 
